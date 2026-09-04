@@ -67,8 +67,8 @@ jobs:
         --upload-file *.war \
         "http://${{ secrets.DEV_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
   # =========================
-  # TEST
-  # =========================
+  # TEST DEPLOYMENT
+  # =========================  
   deploy-test:
     name: Deploy to TEST
     needs: deploy-dev
@@ -76,108 +76,71 @@ jobs:
     environment: TEST
 
     steps:
+
       - name: Download WAR
         uses: actions/download-artifact@v4
         with:
           name: application-war
 
-      - name: Copy WAR to TEST
-        uses: appleboy/scp-action@v1
+      - name: Deploy WAR to TEST using Curl
+        run: |
+          echo "Deploying WAR to TEST..."
+
+          curl -v \
+          -u "${{ secrets.TEST_USERNAME }}:${{ secrets.TEST_PASSWORD }}" \
+          --upload-file *.war \
+          "http://${{ secrets.TEST_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
+
+          echo "TEST deployment completed."
+     # =========================
+     # PRE-PROD DEPLOYMENT
+     # =========================
+     deploy-preprod:
+     name: Deploy to PRE-PROD
+     needs: deploy-test
+     runs-on: ubuntu-latest
+     environment: PRE-PROD
+
+     steps:
+
+      - name: Download WAR
+        uses: actions/download-artifact@v4
         with:
-          host: ${{ secrets.TEST_HOST }}
-          username: ${{ secrets.TEST_USERNAME }}
-          key: ${{ secrets.TEST_SSH_KEY }}
-          source: "*.war"
-          target: "/tmp/"
+          name: application-war
 
-      - name: Deploy WAR and Restart Tomcat
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.TEST_HOST }}
-          username: ${{ secrets.TEST_USERNAME }}
-          key: ${{ secrets.TEST_SSH_KEY }}
-          script: |
-            sudo cp /tmp/*.war /root/apache-tomcat-9.0.121/webapps/
-            sudo rm -f /tmp/*.war
-            cd /root/apache-tomcat-9.0.121
-            ./bin/shutdown.sh || true
-            sleep 5
-            ./bin/startup.sh
+      - name: Deploy WAR to PRE-PROD using Curl
+        run: |
+          echo "Deploying WAR to PRE-PROD..."
 
+          curl -v \
+          -u "${{ secrets.PREPROD_USERNAME }}:${{ secrets.PREPROD_PASSWORD }}" \
+          --upload-file *.war \
+          "http://${{ secrets.PREPROD_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
 
-  # =========================
-  # PRE-PROD
-  # =========================
-  deploy-preprod:
-    name: Deploy to PRE-PROD
-    needs: deploy-test
-    runs-on: ubuntu-latest
-    environment: PRE-PROD
+          echo "PRE-PROD deployment completed."
+    # =========================
+    # PROD DEPLOYMENT
+    # =========================
+    deploy-prod:
+     name: Deploy to PROD
+     needs: deploy-preprod
+     runs-on: ubuntu-latest
+     environment: PROD
 
     steps:
+
       - name: Download WAR
         uses: actions/download-artifact@v4
         with:
           name: application-war
 
-      - name: Copy WAR to PRE-PROD
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.PREPROD_HOST }}
-          username: ${{ secrets.PREPROD_USERNAME }}
-          key: ${{ secrets.PREPROD_SSH_KEY }}
-          source: "*.war"
-          target: "/tmp/"
+      - name: Deploy WAR to PROD using Curl
+        run: |
+          echo "Deploying WAR to PROD..."
 
-      - name: Deploy WAR and Restart Tomcat
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.PREPROD_HOST }}
-          username: ${{ secrets.PREPROD_USERNAME }}
-          key: ${{ secrets.PREPROD_SSH_KEY }}
-          script: |
-            sudo cp /tmp/*.war /root/apache-tomcat-9.0.121/webapps/
-            sudo rm -f /tmp/*.war
-            cd /root/apache-tomcat-9.0.121
-            ./bin/shutdown.sh || true
-            sleep 5
-            ./bin/startup.sh
+          curl -v \
+          -u "${{ secrets.PROD_USERNAME }}:${{ secrets.PROD_PASSWORD }}" \
+          --upload-file *.war \
+          "http://${{ secrets.PROD_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
 
-
-  # =========================
-  # PROD
-  # =========================
-  deploy-prod:
-    name: Deploy to PROD
-    needs: deploy-preprod
-    runs-on: ubuntu-latest
-    environment: PROD
-
-    steps:
-      - name: Download WAR
-        uses: actions/download-artifact@v4
-        with:
-          name: application-war
-
-      - name: Copy WAR to PROD
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USERNAME }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          source: "*.war"
-          target: "/tmp/"
-
-      - name: Deploy WAR and Restart Tomcat
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USERNAME }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          script: |
-            sudo cp /tmp/*.war /root/apache-tomcat-9.0.121/webapps/
-            sudo rm -f /tmp/*.war
-            cd /root/apache-tomcat-9.0.121
-            ./bin/shutdown.sh || true
-            sleep 5
-            ./bin/startup.sh
+          echo "PROD deployment completed."
