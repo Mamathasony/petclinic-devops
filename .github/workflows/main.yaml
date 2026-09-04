@@ -52,41 +52,20 @@ jobs:
   # DEV
   # =========================
   deploy-dev:
-    name: Deploy to DEV
-    needs: build
-    runs-on: ubuntu-latest
-    environment: DEV
+   needs: build
+   runs-on: ubuntu-latest
+   environment: DEV
+   steps:
+    - name: Download WAR
+      uses: actions/download-artifact@v4
+      with:
+        name: application-war
 
-    steps:
-      - name: Download WAR
-        uses: actions/download-artifact@v4
-        with:
-          name: application-war
-
-      - name: Copy WAR to DEV
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USERNAME }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          source: "*.war"
-          target: "/tmp/"
-
-      - name: Deploy WAR and Restart Tomcat
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USERNAME }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          script: |
-            sudo cp /tmp/*.war /root/apache-tomcat-9.0.121/webapps/
-            sudo rm -f /tmp/*.war
-            cd /root/apache-tomcat-9.0.121
-            ./bin/shutdown.sh || true
-            sleep 5
-            ./bin/startup.sh
-
-
+    - name: Deploy WAR using curl
+      run: |
+        curl -v -u "${{ secrets.DEV_USERNAME }}:${{ secrets.DEV_PASSWORD }}" \
+        --upload-file *.war \
+        "http://${{ secrets.DEV_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
   # =========================
   # TEST
   # =========================
