@@ -18,12 +18,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
           cache: maven
+
       - name: Maven Validate
         run: mvn validate
 
@@ -36,10 +38,9 @@ jobs:
       - name: Maven Package
         run: mvn package
 
-      - name: Verify WAR file
+      - name: Verify WAR
         run: ls -lh target/
 
-      # IMPORTANT: Upload WAR so other jobs can download it
       - name: Upload WAR Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -62,22 +63,24 @@ jobs:
         with:
           name: application-war
 
-      - name: Copy WAR to DEV Server
-        uses: appleboy/scp-action@v0.1.7
+      - name: Copy WAR to DEV
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USERNAME }}
           key: ${{ secrets.DEV_SSH_KEY }}
           source: "*.war"
-          target: "/root/apache-tomcat-9.0.121/webapps/"
+          target: "/tmp/"
 
-      - name: Restart Tomcat on DEV
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy WAR and Restart Tomcat
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USERNAME }}
           key: ${{ secrets.DEV_SSH_KEY }}
           script: |
+            sudo cp /tmp/*.war /root/apache-tomcat-9.0.121/webapps/
+            sudo rm -f /tmp/*.war
             cd /root/apache-tomcat-9.0.121
             ./bin/shutdown.sh || true
             sleep 5
@@ -99,22 +102,24 @@ jobs:
         with:
           name: application-war
 
-      - name: Copy WAR to TEST Server
-        uses: appleboy/scp-action@v0.1.7
+      - name: Copy WAR to TEST
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.TEST_HOST }}
           username: ${{ secrets.TEST_USERNAME }}
-          password: ${{ secrets.TEST_PASSWORD }}
+          key: ${{ secrets.TEST_SSH_KEY }}
           source: "*.war"
-          target: "/root/apache-tomcat-9.0.121/webapps/"
+          target: "/tmp/"
 
-      - name: Restart Tomcat on TEST
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy WAR and Restart Tomcat
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.TEST_HOST }}
           username: ${{ secrets.TEST_USERNAME }}
-          password: ${{ secrets.TEST_PASSWORD }}
+          key: ${{ secrets.TEST_SSH_KEY }}
           script: |
+            sudo cp /tmp/*.war /root/apache-tomcat-9.0.121/webapps/
+            sudo rm -f /tmp/*.war
             cd /root/apache-tomcat-9.0.121
             ./bin/shutdown.sh || true
             sleep 5
@@ -136,22 +141,24 @@ jobs:
         with:
           name: application-war
 
-      - name: Copy WAR to PRE-PROD Server
-        uses: appleboy/scp-action@v0.1.7
+      - name: Copy WAR to PRE-PROD
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.PREPROD_HOST }}
           username: ${{ secrets.PREPROD_USERNAME }}
-          password: ${{ secrets.PREPROD_PASSWORD }}
+          key: ${{ secrets.PREPROD_SSH_KEY }}
           source: "*.war"
-          target: "/root/apache-tomcat-9.0.121/webapps/"
+          target: "/tmp/"
 
-      - name: Restart Tomcat on PRE-PROD
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy WAR and Restart Tomcat
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.PREPROD_HOST }}
           username: ${{ secrets.PREPROD_USERNAME }}
-          password: ${{ secrets.PREPROD_PASSWORD }}
+          key: ${{ secrets.PREPROD_SSH_KEY }}
           script: |
+            sudo cp /tmp/*.war /root/apache-tomcat-9.0.121/webapps/
+            sudo rm -f /tmp/*.war
             cd /root/apache-tomcat-9.0.121
             ./bin/shutdown.sh || true
             sleep 5
@@ -173,22 +180,24 @@ jobs:
         with:
           name: application-war
 
-      - name: Copy WAR to PROD Server
-        uses: appleboy/scp-action@v0.1.7
+      - name: Copy WAR to PROD
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
-          password: ${{ secrets.PROD_PASSWORD }}
+          key: ${{ secrets.PROD_SSH_KEY }}
           source: "*.war"
-          target: "/root/apache-tomcat-9.0.121/webapps/"
+          target: "/tmp/"
 
-      - name: Restart Tomcat on PROD
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy WAR and Restart Tomcat
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
-          password: ${{ secrets.PROD_PASSWORD }}
+          key: ${{ secrets.PROD_SSH_KEY }}
           script: |
+            sudo cp /tmp/*.war /root/apache-tomcat-9.0.121/webapps/
+            sudo rm -f /tmp/*.war
             cd /root/apache-tomcat-9.0.121
             ./bin/shutdown.sh || true
             sleep 5
