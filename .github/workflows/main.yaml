@@ -76,7 +76,7 @@ jobs:
           curl -v \
           -u "${{ secrets.DEV_USERNAME }}:${{ secrets.DEV_PASSWORD }}" \
           --upload-file *.war \
-          "http://${{ secrets.DEV_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
+          "http://${{ secrets.DEV_HOST }}:8080/manager/text/deploy?path=/Petclinic&update=true"
 
           echo "DEV deployment completed."
 
@@ -104,7 +104,7 @@ jobs:
           curl -v \
           -u "${{ secrets.TEST_USERNAME }}:${{ secrets.TEST_PASSWORD }}" \
           --upload-file *.war \
-          "http://${{ secrets.TEST_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
+          "http://${{ secrets.TEST_HOST }}:8080/manager/text/deploy?path=/Petclinic&update=true"
 
           echo "TEST deployment completed."
 
@@ -132,7 +132,7 @@ jobs:
           curl -v \
           -u "${{ secrets.PREPROD_USERNAME }}:${{ secrets.PREPROD_PASSWORD }}" \
           --upload-file *.war \
-          "http://${{ secrets.PREPROD_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
+          "http://${{ secrets.PREPROD_HOST }}:8080/manager/text/deploy?path=/Petclinic&update=true"
 
           echo "PRE-PROD deployment completed."
 
@@ -160,6 +160,6 @@ jobs:
           curl -v \
           -u "${{ secrets.PROD_USERNAME }}:${{ secrets.PROD_PASSWORD }}" \
           --upload-file *.war \
-          "http://${{ secrets.PROD_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
+          "http://${{ secrets.PROD_HOST }}:8080/manager/text/deploy?path=/Petclinic&update=true"
 
           echo "PROD deployment completed."
