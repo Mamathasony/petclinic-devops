@@ -1,9 +1,10 @@
-name: CI/CD PIPELINE TO BUILD AND DEPLOY TO TOMCAT
+name: DevOps CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
+
   workflow_dispatch:
 
 jobs:
@@ -16,10 +17,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -36,10 +38,13 @@ jobs:
         run: mvn test
 
       - name: Maven Package
-        run: mvn package
+        run: mvn package -DskipTests
 
-      - name: Verify WAR
-        run: ls -lh target/
+      - name: Check WAR File
+        run: |
+          echo "Checking generated WAR file..."
+          ls -lh target/
+          ls target/*.war
 
       - name: Upload WAR Artifact
         uses: actions/upload-artifact@v4
@@ -49,26 +54,36 @@ jobs:
 
 
   # =========================
-  # DEV
+  # DEV DEPLOYMENT
   # =========================
   deploy-dev:
-   needs: build
-   runs-on: ubuntu-latest
-   environment: DEV
-   steps:
-    - name: Download WAR
-      uses: actions/download-artifact@v4
-      with:
-        name: application-war
+    name: Deploy to DEV
+    needs: build
+    runs-on: ubuntu-latest
+    environment: DEV
 
-    - name: Deploy WAR using curl
-      run: |
-        curl -v -u "${{ secrets.DEV_USERNAME }}:${{ secrets.DEV_PASSWORD }}" \
-        --upload-file *.war \
-        "http://${{ secrets.DEV_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
+    steps:
+
+      - name: Download WAR
+        uses: actions/download-artifact@v4
+        with:
+          name: application-war
+
+      - name: Deploy WAR to DEV using Curl
+        run: |
+          echo "Deploying WAR to DEV..."
+
+          curl -v \
+          -u "${{ secrets.DEV_USERNAME }}:${{ secrets.DEV_PASSWORD }}" \
+          --upload-file *.war \
+          "http://${{ secrets.DEV_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
+
+          echo "DEV deployment completed."
+
+
   # =========================
   # TEST DEPLOYMENT
-  # =========================  
+  # =========================
   deploy-test:
     name: Deploy to TEST
     needs: deploy-dev
@@ -92,16 +107,18 @@ jobs:
           "http://${{ secrets.TEST_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
 
           echo "TEST deployment completed."
-     # =========================
-     # PRE-PROD DEPLOYMENT
-     # =========================
-     deploy-preprod:
-     name: Deploy to PRE-PROD
-     needs: deploy-test
-     runs-on: ubuntu-latest
-     environment: PRE-PROD
 
-     steps:
+
+  # =========================
+  # PRE-PROD DEPLOYMENT
+  # =========================
+  deploy-preprod:
+    name: Deploy to PRE-PROD
+    needs: deploy-test
+    runs-on: ubuntu-latest
+    environment: PRE-PROD
+
+    steps:
 
       - name: Download WAR
         uses: actions/download-artifact@v4
@@ -118,14 +135,16 @@ jobs:
           "http://${{ secrets.PREPROD_HOST }}:8080/manager/text/deploy?path=/myapp&update=true"
 
           echo "PRE-PROD deployment completed."
-    # =========================
-    # PROD DEPLOYMENT
-    # =========================
-    deploy-prod:
-     name: Deploy to PROD
-     needs: deploy-preprod
-     runs-on: ubuntu-latest
-     environment: PROD
+
+
+  # =========================
+  # PROD DEPLOYMENT
+  # =========================
+  deploy-prod:
+    name: Deploy to PROD
+    needs: deploy-preprod
+    runs-on: ubuntu-latest
+    environment: PROD
 
     steps:
 
