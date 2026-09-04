@@ -67,7 +67,7 @@ jobs:
         with:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USERNAME }}
-          password: ${{ secrets.DEV_PASSWORD }}
+          key: ${{ secrets.DEV_SSH_KEY }}
           source: "*.war"
           target: "/root/apache-tomcat-9.0.121/webapps/"
 
@@ -76,7 +76,7 @@ jobs:
         with:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USERNAME }}
-          password: ${{ secrets.DEV_PASSWORD }}
+          key: ${{ secrets.DEV_SSH_KEY }}
           script: |
             cd /root/apache-tomcat-9.0.121
             ./bin/shutdown.sh || true
